@@ -1,4 +1,4 @@
-from app.core.exceptions import ErrorCode
+from app.core.exceptions.error_code import ErrorCode
 
 class GlobalException(Exception):
   def __init__(self, error_code: ErrorCode):
