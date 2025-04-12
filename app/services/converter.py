@@ -66,7 +66,13 @@ async def docs_download(id: int, db: AsyncSession):
 
   if not doc.is_success:
     raise GlobalException(ErrorCode.CONVERSION_FAILED_DOCUMENTS)
-  return doc.output_filename, os.path.join(PATH, doc.convert_filename)
+  
+  convert_filepath = os.path.join(PATH, doc.convert_filename)
+
+  if os.path.exists(convert_filepath):
+    raise GlobalException(ErrorCode.NOT_FOUND_DOCUMENTS)
+
+  return doc.output_filename, convert_filepath
 
 
 async def from_pdf(save_input_filepath: str, convert_filepath: str, output_ext: str):
