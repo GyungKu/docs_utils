@@ -12,6 +12,9 @@ async def create_document(db: AsyncSession, create: DocumentCreate) -> DocumentR
   await db.close()
   return DocumentRead.model_validate(document)
 
-async def get_document(db: AsyncSession, document_id: int) -> DocumentRead:
+async def get_document(db: AsyncSession, document_id: int) -> DocumentRead | None:
   result = await db.execute(select(Document).where(Document.id == document_id))
-  return DocumentRead.model_validate(result.scalar_one_or_none())
+  doc = result.scalar_one_or_none()
+  if not doc:
+    return None
+  return DocumentRead.model_validate(doc)
