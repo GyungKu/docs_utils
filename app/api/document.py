@@ -18,3 +18,9 @@ async def convert_documents(input_ext: str, output_ext: str,
     documents.append(doc.model_dump())
 
   return JSONResponse(status_code=200, content={"documents": documents})
+
+@router.get("/downloads/{id}")
+async def download_document(id: int, db: AsyncSession = Depends(get_db)):
+  output_filename, convert_filepath = await converter.docs_download(id=id, db=db)
+
+  return FileResponse(status_code=200, filename=output_filename, path=convert_filepath)
