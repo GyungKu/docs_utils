@@ -12,6 +12,8 @@ from pptx import Presentation
 from pdf2image import convert_from_path
 from pptx.util import Inches
 from openpyxl.workbook import Workbook
+from app.core.exceptions.global_exception import GlobalException
+from app.core.exceptions.error_code import ErrorCode
 
 
 PATH = os.path.abspath(settings.FILE_STORAGE_PATH)
@@ -60,10 +62,10 @@ async def docs_download(id: int, db: AsyncSession):
   doc = await get_document(document_id=id, db=db)
 
   if not doc:
-    raise Exception("존재하지 않는 파일입니다.") # 이후 커스텀 예외, 핸들러를 통해 처리
+    raise GlobalException(ErrorCode.NOT_FOUND_DOCUMENTS)
 
   if not doc.is_success:
-    raise Exception("변환에 실패한 파일입니다.") # 이후 커스텀 예외, 핸들러를 통해 처리
+    raise GlobalException(ErrorCode.CONVERSION_FAILED_DOCUMENTS)
   return doc.output_filename, os.path.join(PATH, doc.convert_filename)
 
 
