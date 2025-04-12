@@ -69,7 +69,7 @@ async def docs_download(id: int, db: AsyncSession):
   
   convert_filepath = os.path.join(PATH, doc.convert_filename)
 
-  if os.path.exists(convert_filepath):
+  if not os.path.exists(convert_filepath):
     raise GlobalException(ErrorCode.NOT_FOUND_DOCUMENTS)
 
   return doc.output_filename, convert_filepath
