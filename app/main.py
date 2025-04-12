@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.db.base import Base
 from app.db.session import engine
 from app.core.config import settings
+from app.core.exceptions.exception_handler import register_exception_handlers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,3 +16,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(document.router)
+register_exception_handlers(app)
