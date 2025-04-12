@@ -4,8 +4,8 @@ import uuid
 import pdfplumber
 from app.core.config import settings
 from fastapi import UploadFile
-from app.schemas.document import DocumentCreate
-from app.crud.document import create_document
+from app.schemas.document import DocumentCreate, DocumentRead
+from app.crud.document import create_document, get_document
 from sqlalchemy.ext.asyncio import AsyncSession
 from pdf2docx import Converter
 from pptx import Presentation
@@ -17,7 +17,7 @@ from openpyxl.workbook import Workbook
 PATH = os.path.abspath(settings.FILE_STORAGE_PATH)
 LIBREOFFICE_PATH = settings.LIBREOFFICE_PATH
 
-async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db: AsyncSession):
+async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db: AsyncSession) -> DocumentRead:
     # 디렉토리가 없으면 새로 생성
     os.makedirs(PATH, exist_ok=True)
 
@@ -54,6 +54,17 @@ async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db
     finally:
       # 성공, 실패 상관없이 DB 저장
       return await create_document(create=doc, db=db)
+
+
+async def docs_download(id: int, db: AsyncSession):
+  doc = await get_document(document_id=id, db=db)
+
+  if not doc:
+    raise Exception("존재하지 않는 파일입니다.") # 이후 커스텀 예외, 핸들러를 통해 처리
+
+  if not doc.is_success:
+    raise Exception("변환에 실패한 파일입니다.") # 이후 커스텀 예외, 핸들러를 통해 처리
+  return doc.output_filename, os.path.join(PATH, doc.convert_filename)
 
 
 async def from_pdf(save_input_filepath: str, convert_filepath: str, output_ext: str):
