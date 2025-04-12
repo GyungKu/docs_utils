@@ -8,6 +8,7 @@ class Settings(BaseSettings):
   DB_NAME: str
   FILE_STORAGE_PATH: str
   LIBREOFFICE_PATH: str
+  ENV: str
 
   class Config:
     env_file = ".env"

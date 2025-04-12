@@ -1,15 +1,17 @@
-from typing import Union
 from fastapi import FastAPI
-import pkgutil
-import importlib
+from app.api import document
+from contextlib import asynccontextmanager
+from app.db.base import Base
+from app.db.session import engine
+from app.core.config import settings
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+  if settings.ENV == "dev":
+    async with engine.begin() as conn:
+      await conn.run_sync(Base.metadata.create_all)
+    yield
 
-def register_routers(app: FastAPI):
-  import api  # 디렉토리 자체 import
-  for _, module_name, _ in pkgutil.iter_modules(api.__path__):
-    module = importlib.import_module(f"api.{module_name}")
-    if hasattr(module, "router"):
-      app.include_router(module.router)
+app = FastAPI(lifespan=lifespan)
 
-register_routers(app)
+app.include_router(document.router)
