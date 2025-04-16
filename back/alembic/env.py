@@ -8,10 +8,10 @@ from alembic import context
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from db.base import Base
-from db.session import DATABASE_URL
+from app.db.base import Base
+from app.db.session import DATABASE_URL
 
-import models
+import app.models
 
 config = context.config
 
