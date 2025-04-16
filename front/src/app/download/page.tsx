@@ -18,7 +18,7 @@ export default function DownloadPage() {
       const blob = await res.blob();
       saveAs(blob, filename);
       toast.success(`'${filename}' 다운로드 완료`);
-    } catch (err) {
+    } catch {
       toast.error("다운로드 중 오류가 발생했습니다.");
     }
   };
