@@ -1,20 +1,22 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { FileUpload } from "@/src/component/FileUpload";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useConvertedFileStore } from "@/src/stores/convertedFiles";
 import toast from "react-hot-toast";
 import { convertFilesToServer } from "@/src/utils/convertFiles";
 
 const allowedExts = ["pdf", "docx", "pptx", "xlsx"];
 
-export default function ConvertPage() {
+function ConvertPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const inputExt = searchParams.get("input_ext")!;
-  const outputExt = searchParams.get("output_ext")!;
+  const inputExt = searchParams.get("input_ext");
+  const outputExt = searchParams.get("output_ext");
   const [files, setFiles] = useState<File[]>([]);
   const setConvertedFiles = useConvertedFileStore((state) => state.setFiles);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,7 @@ export default function ConvertPage() {
       setConvertedFiles(result.documents);
       toast.dismiss();
       router.push("/download");
-    } catch (error) {
+    } catch {
       toast.dismiss();
       toast.error("변환 중 오류가 발생했습니다.");
       setIsLoading(false);
@@ -72,5 +74,13 @@ export default function ConvertPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function ConvertPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <ConvertPageContent />
+    </Suspense>
   );
 }
