@@ -13,8 +13,8 @@ async def lifespan(app: FastAPI):
   if settings.ENV == "dev":
     async with engine.begin() as conn:
       await conn.run_sync(Base.metadata.create_all)
-      start_scheduler()
-    yield
+  start_scheduler()
+  yield
 
 app = FastAPI(lifespan=lifespan)
 
