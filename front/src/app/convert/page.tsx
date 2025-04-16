@@ -15,8 +15,8 @@ function ConvertPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const inputExt = searchParams.get("input_ext");
-  const outputExt = searchParams.get("output_ext");
+  const inputExt = searchParams.get("input_ext")!;
+  const outputExt = searchParams.get("output_ext")!;
   const [files, setFiles] = useState<File[]>([]);
   const setConvertedFiles = useConvertedFileStore((state) => state.setFiles);
   const [isLoading, setIsLoading] = useState(false);
