@@ -27,6 +27,8 @@ def run_migrations_offline() -> None:
       url = url.replace("mysql+aiomysql", "mysql+pymysql")
     elif "sqlite" in url:
       url = url.replace("sqlite+aiosqlite", "sqlite")
+    elif "postgres" in url:
+       url = url.replace("postgresql+asyncpg", "postgresql")
 
     context.configure(
         url=url,
@@ -45,6 +47,8 @@ def run_migrations_online() -> None:
       url = url.replace("mysql+aiomysql", "mysql+pymysql")
     elif "sqlite" in url:
       url = url.replace("sqlite+aiosqlite", "sqlite")
+    elif "postgres" in url:
+      url = url.replace("postgresql+asyncpg", "postgresql")
 
     connectable = create_engine(url, poolclass=pool.NullPool)
 
