@@ -19,8 +19,8 @@ async def convert_documents(input_ext: str, output_ext: str,
 
   return JSONResponse(status_code=200, content={"documents": documents})
 
-@router.get("/downloads/{id}")
-async def download_document(id: int, db: AsyncSession = Depends(get_db)):
-  output_filename, convert_filepath = await converter.docs_download(id=id, db=db)
+@router.get("/downloads/{convert_filename}")
+async def download_document(convert_filename: str, db: AsyncSession = Depends(get_db)):
+  output_filename, convert_filepath = await converter.docs_download(convert_filename=convert_filename, db=db)
 
   return FileResponse(status_code=200, filename=output_filename, path=convert_filepath)
