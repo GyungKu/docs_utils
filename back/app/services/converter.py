@@ -58,8 +58,8 @@ async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db
       return await create_document(create=doc, db=db)
 
 
-async def docs_download(id: int, db: AsyncSession):
-  doc = await get_document(document_id=id, db=db)
+async def docs_download(convert_filename: str, db: AsyncSession):
+  doc = await get_document(convert_filename=convert_filename, db=db)
 
   if not doc:
     raise GlobalException(ErrorCode.NOT_FOUND_DOCUMENTS)

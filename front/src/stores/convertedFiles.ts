@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 type ConvertedFile = {
-  id: number;
+  convert_filename: string;
   output_filename: string;
   is_success: boolean;
 };
