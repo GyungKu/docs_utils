@@ -31,6 +31,7 @@ function ConvertPageContent() {
     ) {
       router.replace("/");
     }
+    setFiles([]);
   }, [inputExt, outputExt, router]);
 
   const handleConvert = async () => {
