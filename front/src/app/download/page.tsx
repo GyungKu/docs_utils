@@ -8,10 +8,10 @@ import toast from "react-hot-toast";
 export default function DownloadPage() {
   const { files } = useConvertedFileStore();
 
-  const handleDownload = async (id: number, filename: string) => {
+  const handleDownload = async (convert_filename: string, filename: string) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/documents/downloads/${id}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/documents/downloads/${convert_filename}`
       );
       if (!res.ok) throw new Error("다운로드 실패");
 
@@ -32,16 +32,18 @@ export default function DownloadPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">파일 목록</h1>
-      {files.map((file) => (
+      {files.map((file, index) => (
         <div
-          key={file.id}
+          key={index}
           className="flex items-center justify-between border p-2 rounded mb-2"
         >
           <span>{file.output_filename}</span>
           {file.is_success ? (
             <button
               className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 cursor-pointer"
-              onClick={() => handleDownload(file.id, file.output_filename)}
+              onClick={() =>
+                handleDownload(file.convert_filename, file.output_filename)
+              }
             >
               다운로드
             </button>
