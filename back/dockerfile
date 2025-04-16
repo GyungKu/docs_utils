@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
 # 필요 패키지 설치
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN alembic upgrade head
 
 # 애플리케이션 복사
 COPY . /app
