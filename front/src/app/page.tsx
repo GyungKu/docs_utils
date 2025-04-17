@@ -4,9 +4,10 @@ export default function Home() {
       <div>
         <h2 className="text-2xl font-bold">유의사항</h2>
         <ul className="list-disc mt-4 text-gray-700 text-left max-w-md mx-auto">
+          <li>PDF로 변환하는 것은 성능이 준수합니다.(XLSX ➡️ PDF 제외)</li>
           <li>
-            PDF로 변환하는 것은 성능이 준수하지만(XLSX ➡️ PDF 제외), PDF에서
-            변환하는 것은 기본적으로 좋지 않습니다.
+            PDF를 변환하는 것은 이미지로 만들어 변환하기 때문에 편집이
+            불가능합니다.
           </li>
         </ul>
       </div>
