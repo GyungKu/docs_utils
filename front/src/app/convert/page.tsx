@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { FileUpload } from "@/src/component/FileUpload";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useConvertedFileStore } from "@/src/stores/convertedFiles";
 import toast from "react-hot-toast";
 import { convertFilesToServer } from "@/src/utils/convertFiles";
@@ -20,6 +20,7 @@ function ConvertPageContent() {
   const [files, setFiles] = useState<File[]>([]);
   const setConvertedFiles = useConvertedFileStore((state) => state.setFiles);
   const [isLoading, setIsLoading] = useState(false);
+  const [key, setKey] = useState(Date.now());
 
   useEffect(() => {
     if (
@@ -32,6 +33,7 @@ function ConvertPageContent() {
       router.replace("/");
     }
     setFiles([]);
+    setKey(Date.now());
   }, [inputExt, outputExt, router]);
 
   const handleConvert = async () => {
@@ -60,7 +62,12 @@ function ConvertPageContent() {
       <div className="flex flex-col items-center justify-center">
         <span className="text-xl font-bold">{`${inputExt?.toUpperCase()} ➡️ ${outputExt?.toUpperCase()}`}</span>
       </div>
-      <FileUpload inputExt={inputExt!} files={files} setFiles={setFiles} />
+      <FileUpload
+        key={key}
+        inputExt={inputExt!}
+        files={files}
+        setFiles={setFiles}
+      />
       <div className="flex flex-col items-center justify-center">
         <button
           className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
