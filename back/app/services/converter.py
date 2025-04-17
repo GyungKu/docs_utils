@@ -1,23 +1,25 @@
 import os
 import subprocess
 import uuid
-import pdfplumber
+import io
 from app.core.config import settings
 from fastapi import UploadFile
 from app.schemas.document import DocumentCreate, DocumentRead
 from app.crud.document import create_document, get_document
 from sqlalchemy.ext.asyncio import AsyncSession
-from pdf2docx import Converter
-from pptx import Presentation
-from pdf2image import convert_from_path
-from pptx.util import Inches
 from openpyxl.workbook import Workbook
+from openpyxl.drawing.image import Image as XlImage
 from app.core.exceptions.global_exception import GlobalException
 from app.core.exceptions.error_code import ErrorCode
+from docx import Document
+from pptx import Presentation
+from pptx.util import Inches
+from pdf2image import convert_from_path
 
 
 PATH = os.path.abspath(settings.FILE_STORAGE_PATH)
 LIBREOFFICE_PATH = settings.LIBREOFFICE_PATH
+POPPLER_PATH = settings.POPPLER_PATH
 
 async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db: AsyncSession) -> DocumentRead:
     # 디렉토리가 없으면 새로 생성
@@ -53,6 +55,8 @@ async def convert_document(input_ext: str, output_ext: str, file: UploadFile, db
       
       # 성공 시 success를 True로
       doc.is_success = True
+    except Exception as e:
+      print(e)
     finally:
       # 성공, 실패 상관없이 DB 저장
       return await create_document(create=doc, db=db)
@@ -76,37 +80,101 @@ async def docs_download(convert_filename: str, db: AsyncSession):
 
 
 async def from_pdf(save_input_filepath: str, convert_filepath: str, output_ext: str):
+  images = convert_from_path(save_input_filepath, dpi=200, poppler_path=POPPLER_PATH)
+  
   if output_ext == "docx":
-    cv = Converter(save_input_filepath)
-    cv.convert(convert_filepath, start=0, end=None)
-    cv.close()
+    doc = Document()
+
+    for i, image in enumerate(images):
+        # 메모리에서 이미지 처리
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
+        # 이미지를 문서에 추가 (페이지 너비에 맞게)
+        doc.add_picture(img_byte_arr, width=Inches(6))
+        
+        # 마지막 페이지가 아니면 페이지 나누기 추가
+        if i < len(images) - 1:
+            doc.add_page_break()
+
+    doc.save(convert_filepath)
   
   if output_ext == "pptx":
-    images = convert_from_path(save_input_filepath, dpi=200)
+    print("podf -> pptx 리팩토링")
+    # 새 PowerPoint 프레젠테이션 생성
     prs = Presentation()
-    blank_slide_layout = prs.slide_layouts[6]
 
-    for image in images:
-      slide = prs.slides.add_slide(blank_slide_layout)
-      img_path = os.path.join(PATH, get_uuid_filename("jpg"))
-      image.save(img_path, "JPEG")
-      slide.shapes.add_picture(img_path, Inches(0), Inches(0),
-                               width=prs.slide_width, height=prs.slide_height)
-      os.remove(img_path)
-
+    # 첫 페이지 이미지 기준으로 슬라이드 크기 설정
+    first_image = images[0]
+    img_width, img_height = first_image.size  # pixel 단위
+    prs.slide_width = Inches(img_width / 200 * 72 / 96)   # pixel → point → inch
+    prs.slide_height = Inches(img_height / 200 * 72 / 96)
+    
+    # 각 이미지를 새 슬라이드에 추가
+    for i, image in enumerate(images):
+        # 빈 슬라이드 생성
+        slide = prs.slides.add_slide(prs.slide_layouts[6])  # 6은 빈 레이아웃
+        
+        # 이미지를 메모리 스트림으로 변환
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
+        # 슬라이드 크기 계산
+        slide_width = prs.slide_width
+        slide_height = prs.slide_height
+        
+        # 이미지를 슬라이드에 추가 (슬라이드 전체 크기에 맞게)
+        slide.shapes.add_picture(
+            img_byte_arr,
+            left=0,
+            top=0,
+            width=slide_width,
+            height=slide_height
+        )
+    
+    # 프레젠테이션 저장
     prs.save(convert_filepath)
 
   if output_ext == "xlsx":
+    # 새 Excel 워크북 생성
     wb = Workbook()
     ws = wb.active
+    
+    # 각 이미지를 동일한 시트에 세로로 배치
+    current_row = 1
+    
+    for image in images:
+        # 이미지 크기 조절
+        img_width, img_height = image.size
+        scaling_factor = min(800 / img_width, 500 / img_height)
+        new_width = int(img_width * scaling_factor)
+        new_height = int(img_height * scaling_factor)
+        resized_image = image.resize((new_width, new_height))
 
-    with pdfplumber.open(save_input_filepath) as pdf:
-      for page in pdf.pages:
-        tables = page.extract_tables()
-        for table in tables:
-          for row in table:
-            ws.append(row)
+        # 이미지 메모리 스트림 변환
+        img_byte_arr = io.BytesIO()
+        resized_image.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
 
+        # 엑셀 이미지 객체 생성 및 삽입
+        img = XlImage(img_byte_arr)
+        cell_position = f"A{current_row}"
+        ws.add_image(img, cell_position)
+
+        # 행 높이 조정 (이미지 높이 → 엑셀 행 수로 변환)
+        # openpyxl 기준: 약 1행당 0.75pt ≒ 1px 정도로 보면 무난
+        px_per_row = 15  # 15px 정도를 한 행에 배치한다고 가정
+        image_height_in_rows = max(1, int(new_height / px_per_row))  # 최소 1행
+
+        # 다음 이미지 배치할 행 계산
+        for row in range(current_row, current_row + image_height_in_rows):
+            ws.row_dimensions[row].height = 15  # 기본 행 높이 설정
+
+        current_row += image_height_in_rows + 2  # 이미지 + 간격
+    
+    # 워크북 저장
     wb.save(convert_filepath)
 
 
