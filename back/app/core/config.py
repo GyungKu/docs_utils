@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
+  ENV: str
   DB_HOST: str
   DB_PORT: int
   DB_USER: str
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
   LIBREOFFICE_PATH: str
   ALLOWED_ORIGINS: list[str]
   DATABASE_URL: str
-  ENV: str
+  POPPLER_PATH: str
 
   class Config:
     env_file = ".env"
